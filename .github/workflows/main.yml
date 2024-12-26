@@ -17,27 +17,8 @@ jobs:
           - 1433:1433
         options: >-
           --env ACCEPT_EULA=Y
-          --env SA_PASSWORD=name: MS SQL Server CI
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-
-jobs:
-  mssql-test:
-    runs-on: ubuntu-latest
-
-    services:
-      mssql:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        ports:
-          - 1433:1433
-        options: >-
-          --env ACCEPT_EULA=Y
-          --env SA_PASSWORD=YourPassword123!
-          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourPassword123!' -Q 'SELECT 1'"
+          --env SA_PASSWORD=YourStrong!Password
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourStrong!Password' -Q 'SELECT 1'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 3
@@ -49,23 +30,18 @@ jobs:
     - name: Wait for MS SQL Server to be ready
       run: |
         for i in {1..30}; do
-          /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourPassword123!' -Q "SELECT 1" && break || sleep 2;
+          /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourStrong!Password' -Q "SELECT 1" && break || sleep 2;
         done
 
-          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourPassword123!' -Q 'SELECT 1'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 3
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Wait for MS SQL Server to be ready
+    - name: Create database and table
       run: |
-        for i in {1..30}; do
-          /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourPassword123!' -Q "SELECT 1" && break || sleep 2;
-        done
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourStrong!Password' -Q "CREATE DATABASE TestDB;"
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourStrong!Password' -d TestDB -Q "CREATE TABLE TestTable (id INT PRIMARY KEY, name NVARCHAR(50));"
+
+    - name: Insert and query data
+      run: |
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourStrong!Password' -d TestDB -Q "INSERT INTO TestTable VALUES (1, 'GitHub Actions');"
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourStrong!Password' -d TestDB -Q "SELECT * FROM TestTable;"
 
     - name: Check container logs
       run: docker logs $(docker ps -q --filter "ancestor=mcr.microsoft.com/mssql/server:2022-latest")
