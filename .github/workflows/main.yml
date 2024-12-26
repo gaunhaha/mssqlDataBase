@@ -1,0 +1,38 @@
+name: Run MSSQL in CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test-mssql:
+    runs-on: ubuntu-latest
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+          - 1433:1433
+        options: >-
+          --env ACCEPT_EULA=Y
+          --env SA_PASSWORD=YourStrong!Password
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Password -Q 'SELECT 1'" 
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Wait for MSSQL to be ready
+      run: |
+        for i in {1..30}; do
+          /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Password -Q "SELECT 1" && break || sleep 2;
+        done
+
+    - name: Run SQL script
+      run: |
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Password -Q "CREATE DATABASE TestDB;"
