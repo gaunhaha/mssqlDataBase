@@ -12,7 +12,7 @@ jobs:
 
     services:
       mssql:
-        image: mcr.microsoft.com/mssql/server:2022-latest
+        image: mcr.microsoft.com/mssql/server:2019-latest
         ports:
           - 1433:1433
         options: >-
@@ -42,7 +42,4 @@ jobs:
       run: |
         /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourStrong!Password' -d TestDB -Q "INSERT INTO TestTable VALUES (1, 'GitHub Actions');"
         /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 'YourStrong!Password' -d TestDB -Q "SELECT * FROM TestTable;"
-
-    - name: Check container logs
-      run: docker logs $(docker ps -q --filter "ancestor=mcr.microsoft.com/mssql/server:2022-latest")
 
